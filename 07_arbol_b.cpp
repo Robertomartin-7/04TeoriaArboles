@@ -180,8 +180,15 @@ private:
     // false (y claveQueSube/hermanoDerecho no se usan).
     bool dividirSiHaceFalta(Nodo* n, int& claveQueSube, Nodo*& hermanoDerecho) {
         if (static_cast<int>(n->claves.size()) < 2 * t_) return false;
-        // TODO: implementar los cinco pasos de arriba.
-        return false;
+        claveQueSube = n->claves[t_];
+        hermanoDerecho = new Nodo(n -> esHoja);  
+        hermanoDerecho->claves.assign(n->claves.begin() + t_ + 1, n->claves.end());
+        if (!n->esHoja){
+            hermanoDerecho -> hijos.assign(n->hijos.begin() + t_ + 1, n->hijos.end());
+            n->hijos.resize(t_ + 1);
+        }
+        n->claves.resize(t_);
+        return true;
     }
 
     static void inordenEn(Nodo* n, std::vector<int>& salida) {

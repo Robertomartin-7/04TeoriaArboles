@@ -126,9 +126,9 @@ public:
 // en que lugar de su vector esta p: por eso este nodo guarda tambien padre.
 // =========================================================================
 struct NodoLista : NodoBase {
-    std::string etiqueta;
-    NodoLista* padre = nullptr;
-    std::vector<NodoLista*> hijos;
+    std::string etiqueta; //24 bytes
+    NodoLista* padre = nullptr; //8 bytes
+    std::vector<NodoLista*> hijos; //24 bytes
     explicit NodoLista(std::string e) : etiqueta(std::move(e)) {} // move es una optimización: evita copiar la cadena, la "roba" del argumento
 };
 
@@ -140,15 +140,19 @@ public:
     ArbolLista& operator=(const ArbolLista&) = delete;   // sin copias
 
     bool     vacio() const override { return raiz_ == nullptr; }
+
     Posicion raiz() const override {
         if (vacio()) throw std::logic_error("raiz() de un arbol vacio");
         return raiz_;
     }
+
     Posicion padre(Posicion p) const override { return nodo(p)->padre; }   // O(1)
+
     Posicion primerHijo(Posicion p) const override {                       // O(1)
         NodoLista* n = nodo(p);
         return n->hijos.empty() ? nullptr : n->hijos.front();
     }
+
     // O(k), k = hijos del padre: hay que localizar p en el vector del padre.
     Posicion hermanoDerecho(Posicion p) const override {
         NodoLista* n = nodo(p);
@@ -157,6 +161,7 @@ public:
         auto it = std::find(h.begin(), h.end(), n);
         return (it + 1 == h.end()) ? nullptr : *(it + 1);
     }
+
     const std::string& etiqueta(Posicion p) const override { return nodo(p)->etiqueta; }
 
     Posicion crearRaiz(const std::string& v) override {
@@ -164,6 +169,7 @@ public:
         raiz_ = new NodoLista(v);
         return raiz_;
     }
+
     Posicion insertarHijo(Posicion p, const std::string& v) override {
         NodoLista* nuevo = new NodoLista(v);
         nuevo->padre = nodo(p);
@@ -187,9 +193,9 @@ private:
 // IMPLEMENTACION B: PRIMER-HIJO / HERMANO-DERECHO. Dos punteros, siempre.
 // =========================================================================
 struct NodoPHHD : NodoBase {
-    std::string etiqueta;
-    NodoPHHD* primerHijo_     = nullptr;
-    NodoPHHD* hermanoDerecho_ = nullptr;
+    std::string etiqueta; // 24 bytes
+    NodoPHHD* primerHijo_     = nullptr; // 8 bytes
+    NodoPHHD* hermanoDerecho_ = nullptr; // 8 bytes
     explicit NodoPHHD(std::string e) : etiqueta(std::move(e)) {}
 };
 
@@ -208,8 +214,11 @@ public:
     // O(n): el nodo no sabe quien es su padre, asi que hay que buscarlo
     // recorriendo el arbol desde la raiz. (Ver la pregunta del README.)
     Posicion padre(Posicion p) const override { return buscarPadre(raiz_, nodo(p)); }
+
     Posicion primerHijo(Posicion p) const override { return nodo(p)->primerHijo_; }         // O(1)
+
     Posicion hermanoDerecho(Posicion p) const override { return nodo(p)->hermanoDerecho_; } // O(1)
+
     const std::string& etiqueta(Posicion p) const override { return nodo(p)->etiqueta; }
 
     Posicion crearRaiz(const std::string& v) override {
@@ -270,6 +279,13 @@ void preorden(const Arbol& a, Posicion p, int profundidad, std::string& salida) 
     salida += std::string(profundidad * 2, ' ') + a.etiqueta(p) + "\n"; //Aquí se multiplica la profundidad por 2 para crear una indentación visual en la salida, lo que ayuda a representar la estructura del árbol de manera más clara.
     preorden(a, a.primerHijo(p), profundidad + 1, salida);   // baja un nivel
     preorden(a, a.hermanoDerecho(p), profundidad, salida);   // se queda en este nivel
+}
+
+void postorden(const Arbol& a, Posicion p, std::string& salida) {
+    if (p == nullptr) return;                    // posición nula: nada que hacer
+    postorden(a, a.primerHijo(p), salida);       // 1. todos mis hijos (y lo que cuelga de ellos)
+    salida += a.etiqueta(p) + " ";               // 2. yo
+    postorden(a, a.hermanoDerecho(p), salida);   // 3. mis hermanos, que NO son descendientes míos
 }
 
 int altura(const Arbol& a, Posicion p) {
